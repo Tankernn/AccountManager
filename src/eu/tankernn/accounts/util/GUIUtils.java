@@ -1,4 +1,4 @@
-package eu.tankernn.accounts.frame;
+package eu.tankernn.accounts.util;
 
 import java.util.List;
 

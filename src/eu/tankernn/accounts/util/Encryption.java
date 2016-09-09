@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -21,44 +22,61 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Encryption {
-	
+
 	private static final String CIPHER_TYPE = "AES/GCM/PKCS5Padding";
-	private static final String STRING_SEPARATOR = "#";
-	
+	public static final String HEX_STRING_SEPARATOR = "#";
+
+	public static String decryptHexEncoded(String dataString, char[] password) throws InvalidPasswordException {
+		String[] splitted = dataString.split(HEX_STRING_SEPARATOR);
+		
+		byte[][] encryptedComplex = (byte[][]) Arrays.asList(splitted).stream().map(s -> hexToBytes(s)).toArray();
+
+		return decrypt(encryptedComplex, password);
+	}
+
 	/**
 	 * Decrypts an encrypted string of data.
 	 * 
-	 * @param dataString
+	 * @param data
 	 *            A hex-coded string with the format 'SALT#IV#DATA'
 	 * @param password
 	 *            The password used when the string was encoded
 	 * @return The decrypted string
+	 * @throws InvalidPasswordException
+	 *             if the password is incorrect
 	 */
-	public static String decrypt(String dataString, String password) {
-		String[] splitted = dataString.split(STRING_SEPARATOR);
-		
-		byte[] salt = hexToBytes(splitted[0]);
-		byte[] iv = hexToBytes(splitted[1]);
-		byte[] data = hexToBytes(splitted[2]);
+	public static String decrypt(byte[][] data, char[] password) throws InvalidPasswordException {
 
-		return decrypt(salt, iv, data, password);
+		return decrypt(data[0], data[1], data[2], password);
 	}
 
-	private static String decrypt(byte[] salt, byte[] iv, byte[] data, String key) {
+	private static String decrypt(byte[] salt, byte[] iv, byte[] data, char[] password)
+			throws InvalidPasswordException {
 		try {
-			SecretKey secret = composeKey(salt, key.toCharArray());
+			SecretKey secret = composeKey(salt, password);
 			Cipher cipher = Cipher.getInstance(CIPHER_TYPE);
-			
+
 			GCMParameterSpec params = new GCMParameterSpec(128, iv);
 			cipher.init(Cipher.DECRYPT_MODE, secret, params);
 			String plainText = new String(cipher.doFinal(data), "UTF-8");
 			return plainText;
 		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
-				| BadPaddingException | InvalidKeySpecException | UnsupportedEncodingException
-				| InvalidAlgorithmParameterException e) {
+				| InvalidKeySpecException | UnsupportedEncodingException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 			return null;
+		} catch (BadPaddingException e) {
+			throw new InvalidPasswordException();
 		}
+	}
+
+	public static String encryptHexEncoded(String data, char[] password) {
+		byte[][] encryptedComplex = encrypt(data, password);
+
+		String saltString = bytesToHex(encryptedComplex[0]);
+		String ivString = bytesToHex(encryptedComplex[1]);
+		String dataString = bytesToHex(encryptedComplex[2]);
+
+		return String.join(HEX_STRING_SEPARATOR, saltString, ivString, dataString);
 	}
 
 	/**
@@ -69,35 +87,31 @@ public class Encryption {
 	 * @param password
 	 *            The password to use when decrypting the data.
 	 * @return All information needed to get the original data back, except the
-	 *         password, compiled into a single string.
+	 *         password.
 	 */
-	public static String encrypt(String data, String password) {
-		 byte[][] encryptedComplex = encrypt(new SecureRandom().generateSeed(8), data, password);
-		
-		String saltString = bytesToHex(encryptedComplex[0]);
-		String ivString = bytesToHex(encryptedComplex[1]);
-		String dataString = bytesToHex(encryptedComplex[2]);
-		
-		return String.join(STRING_SEPARATOR, saltString, ivString, dataString);
+	public static byte[][] encrypt(String data, char[] password) {
+		return encrypt(new SecureRandom().generateSeed(8), data, password);
 	}
-	
+
 	/**
 	 * Encrypts the data using the key made from the salt and password.
+	 * 
 	 * @param salt
 	 * @param data
 	 * @param password
-	 * @return A two-dimensional byte array where [0] is the salt bytes, [1] is the IV bytes and [2] is the encrypted data bytes.
+	 * @return A two-dimensional byte array where [0] is the salt bytes, [1] is
+	 *         the IV bytes and [2] is the encrypted data bytes.
 	 */
-	private static byte[][] encrypt(byte[] salt, String data, String password) {
+	private static byte[][] encrypt(byte[] salt, String data, char[] password) {
 		try {
-			SecretKey secret = composeKey(salt, password.toCharArray());
+			SecretKey secret = composeKey(salt, password);
 			Cipher cipher = Cipher.getInstance(CIPHER_TYPE);
 			cipher.init(Cipher.ENCRYPT_MODE, secret);
 			AlgorithmParameters params = cipher.getParameters();
 			byte[] iv = params.getParameterSpec(GCMParameterSpec.class).getIV();
 			byte[] cipherText = cipher.doFinal(data.getBytes());
-			
-			return new byte[][] {salt, iv, cipherText};
+
+			return new byte[][] { salt, iv, cipherText };
 		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
 				| BadPaddingException | InvalidKeySpecException | InvalidParameterSpecException e) {
 			e.printStackTrace();
@@ -113,15 +127,21 @@ public class Encryption {
 		SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 		return secret;
 	}
-	
+
 	/**
 	 * Testing method for encryption functionality.
+	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String encrypted = encrypt("asd", "password");
+		byte[][] encrypted = encrypt("asd", "password".toCharArray());
 		System.out.println(encrypted);
-		String decrypted = decrypt(encrypted, "password");
+		String decrypted = "";
+		try {
+			decrypted = decrypt(encrypted, "password".toCharArray());
+		} catch (InvalidPasswordException e) {
+			System.out.println("Wrong password");
+		}
 		System.out.println(decrypted);
 	}
 
@@ -130,6 +150,7 @@ public class Encryption {
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
 	public static String bytesToHex(byte[] bytes) {
+		// Array to hold the chars, two chars for each byte
 		char[] hexChars = new char[bytes.length * 2];
 		for (int j = 0; j < bytes.length; j++) {
 			int v = bytes[j] & 0xFF;

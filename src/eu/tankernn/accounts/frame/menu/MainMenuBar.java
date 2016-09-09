@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -32,7 +33,10 @@ public class MainMenuBar extends JMenuBar implements ActionListener {
 
 	private JMenu accountMenu = new JMenu("Accounts");
 	private JMenuItem newAccount = new JMenuItem("New account..."), refresh = new JMenuItem("Refresh accounts");
-
+	
+	private JMenu optionsMenu = new JMenu("Options");
+	private JCheckBoxMenuItem useEncryption = new JCheckBoxMenuItem("Use encryption when saving files");
+	
 	public MainMenuBar(MainFrame frame) {
 		this.frame = frame;
 		
@@ -46,7 +50,10 @@ public class MainMenuBar extends JMenuBar implements ActionListener {
 
 		// Accounts menu
 		addMenuWithItems(accountMenu, newAccount, refresh);
-
+		
+		// Options menu
+		addMenuWithItems(optionsMenu, useEncryption);
+		useEncryption.setSelected(AccountManager.isSavingWithEncryption());
 	}
 
 	private void addMenuWithItems(JMenu menu, JMenuItem... items) {
@@ -78,6 +85,8 @@ public class MainMenuBar extends JMenuBar implements ActionListener {
 			}
 		} else if (src.equals(refresh)) {
 			frame.refresh();
+		} else if (src.equals(useEncryption)) {
+			AccountManager.setSaveWithEncryption(useEncryption.isSelected());
 		}
 	}
 

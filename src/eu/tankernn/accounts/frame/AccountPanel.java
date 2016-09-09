@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import javax.swing.border.TitledBorder;
 import eu.tankernn.accounts.Account;
 import eu.tankernn.accounts.AccountEvent;
 import eu.tankernn.accounts.AccountManager;
+import eu.tankernn.accounts.util.GUIUtils;
 
 public class AccountPanel extends JPanel implements ActionListener {
 
@@ -31,6 +33,8 @@ public class AccountPanel extends JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
 
 	private Account currentAccount;
+
+	private DecimalFormat format;
 
 	private JPanel infoPanel = new JPanel();
 	private JLabel lName = new JLabel("Name: "), lBalance = new JLabel("Balance: "),
@@ -49,6 +53,10 @@ public class AccountPanel extends JPanel implements ActionListener {
 	 */
 	public AccountPanel() {
 		this.setLayout(new BorderLayout());
+
+		format = new DecimalFormat("### ###.00");
+		format.setGroupingUsed(true);
+		format.setGroupingSize(3);
 
 		infoPanel.setLayout(new GridLayout(6, 1));
 		add(infoPanel, BorderLayout.WEST);
@@ -71,33 +79,33 @@ public class AccountPanel extends JPanel implements ActionListener {
 
 	public void updatePanel(Account a) {
 		this.currentAccount = a;
-		
+
 		if (a == null) {
 			lName.setText("Name: ");
 			lBalance.setText("Balance: ");
 			lAccountNumber.setText("Account number: ");
 			history.setModel(new DefaultListModel<AccountEvent>());
-			
+
 			transferFrom.setEnabled(false);
 			deposit.setEnabled(false);
 			withdraw.setEnabled(false);
 		} else {
 			lName.setText("Name: " + a.toString());
-			lBalance.setText("Balance: " + a.calculateBalance());
+			lBalance.setText("Balance: " + AccountManager.CURRENCY + " " + format.format(a.calculateBalance()));
 			lAccountNumber.setText("Account number: " + a.getAccountNumber());
 			history.setModel(GUIUtils.listModelFromList(a.getHistory()));
-			
+
 			// "Clone" account list
 			List<Account> accounts = new ArrayList<Account>(AccountManager.getAccounts());
 			// Can't transfer to self
 			accounts.remove(a);
 			otherAccounts.setModel(GUIUtils.comboBoxModelFromList(accounts));
-			
+
 			transferFrom.setEnabled(true);
 			deposit.setEnabled(true);
 			withdraw.setEnabled(true);
 		}
-		
+
 		// Fix history list width.
 		Dimension d = scrollPane.getPreferredSize();
 		d.width = infoPanel.getWidth(); // Same as infopanel
@@ -117,7 +125,8 @@ public class AccountPanel extends JPanel implements ActionListener {
 			}
 
 			JOptionPane.showConfirmDialog(null,
-					new JComponent[] { new JLabel("Please select receiver account."), otherAccounts }, "Select account.", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+					new JComponent[] { new JLabel("Please select receiver account."), otherAccounts },
+					"Select account.", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 			Account sender = currentAccount, receiver = (Account) otherAccounts.getSelectedItem();
 
@@ -138,11 +147,14 @@ public class AccountPanel extends JPanel implements ActionListener {
 			if (amount < 0) {
 				JOptionPane.showMessageDialog(this, "Please enter a positive value.");
 				return;
+			} else if (amount > currentAccount.calculateBalance()) {
+				JOptionPane.showMessageDialog(this, "You do not have enough balance to withdraw that amount.");
+				return;
 			}
 
 			currentAccount.getHistory().add(new AccountEvent(-amount, "User withdrew " + amount + "."));
 		}
-		
+
 		this.updatePanel(currentAccount);
 	}
 
@@ -150,11 +162,12 @@ public class AccountPanel extends JPanel implements ActionListener {
 		String amountStr = JOptionPane.showInputDialog("Amount to " + action + ":");
 
 		double amount = -1;
-		try {
-			amount = Double.parseDouble(amountStr);
-		} catch (NumberFormatException ex) {
-			JOptionPane.showMessageDialog(null, "Please enter a valid number value.");
-		}
+		while (amount == -1)
+			try {
+				amount = Double.parseDouble(amountStr);
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(null, "Please enter a valid number value.");
+			}
 		return amount;
 	}
 }

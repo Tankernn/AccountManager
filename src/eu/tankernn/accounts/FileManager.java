@@ -2,16 +2,19 @@ package eu.tankernn.accounts;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 public class FileManager {
-	private static final JFileChooser FILE_CHOOSER = new JFileChooser("data/");
+	public static final JFileChooser FILE_CHOOSER = new JFileChooser("data/");
 
 	private static final File lastFilenameCache = new File(
 			System.getProperty("user.home") + File.separator + "accountmanager" + File.separator + "lastFile.txt");
@@ -42,7 +45,7 @@ public class FileManager {
 		// Remember this filename
 		if (!file.equals(lastFilenameCache))
 			FileManager.writeStringToFile(lastFilenameCache, file.getAbsolutePath());
-		
+
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		StringBuilder builder = new StringBuilder();
 
@@ -71,15 +74,15 @@ public class FileManager {
 			JOptionPane.showMessageDialog(null, "That file already exists.");
 			return null;
 		}
-		
+
 		newFile.createNewFile();
-		
+
 		FileManager.writeStringToFile(lastFilenameCache, newFile.getAbsolutePath());
 		writeStringToFile(newFile, "[]");
 
 		return newFile;
 	}
-	
+
 	public static void writeStringToFile(boolean saveAs, String contents) throws FileNotFoundException {
 		if (saveAs)
 			FILE_CHOOSER.showSaveDialog(null);
@@ -110,5 +113,28 @@ public class FileManager {
 
 	public static File latestFile() {
 		return FILE_CHOOSER.getSelectedFile();
+	}
+
+	public static <T> T readObjectFromFile(File file, Class<T> class1) throws IOException, ClassNotFoundException {
+		if (file == null) {
+			FILE_CHOOSER.showOpenDialog(null);
+			file = FILE_CHOOSER.getSelectedFile();
+		}
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
+		T obj = class1.cast(in.readObject());
+		in.close();
+		return obj;
+	}
+
+	public static <T> void writeObjectToFile(boolean saveAs, T contents) throws ClassNotFoundException, IOException {
+		if (saveAs)
+			FILE_CHOOSER.showSaveDialog(null);
+		writeObjectToFile(saveAs ? FILE_CHOOSER.getSelectedFile() : getLastFileFromCache(), contents);
+	}
+
+	public static <T> void writeObjectToFile(File file, T obj) throws IOException, ClassNotFoundException {
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
+		out.writeObject(obj);
+		out.close();
 	}
 }

@@ -15,12 +15,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.tankernn.accounts.frame.MainFrame;
+import eu.tankernn.accounts.frame.PasswordDialog;
 import eu.tankernn.accounts.util.Encryption;
+import eu.tankernn.accounts.util.InvalidPasswordException;
 
 public class AccountManager {
+	public static final String CURRENCY = "SEK";
+
 	private static String lastJSONString = "[]";
-	private static String lastPassword;
-	private static boolean saveWithEncryption = false;
+	private static char[] lastPassword;
+	private static boolean saveWithEncryption = true;
 
 	private static List<Account> accounts;
 
@@ -41,45 +45,59 @@ public class AccountManager {
 	}
 
 	public static void openFile() {
-		openFile(null);
+		FileManager.FILE_CHOOSER.showOpenDialog(null);
+		openFile(FileManager.FILE_CHOOSER.getSelectedFile());
 	}
 
 	/**
-	 * Loads the account file specified.
+	 * Loads the accounts in the file specified.
 	 * 
 	 * @param file
 	 *            The file to load
 	 */
 	public static void openFile(File file) {
-		String rawString = null;
+		// Open plain text file
 		try {
-			rawString = FileManager.readFileAsString(file);
+			String jsonString = FileManager.readFileAsString(file);
+			//If '[' is first, the JSON is *probably* valid
+			if (jsonString.startsWith("[")) {
+				accounts = parseJSON(jsonString);
+				lastJSONString = jsonString;
+				return;
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
 		}
-		if (rawString != null) {
-			String password = null;
-			String jsonString = new String(rawString);
-			while (true) {
-				try {
-					jsonString = password == null ? new String(rawString) : Encryption.decrypt(rawString, password);
-					accounts = parseJSON(jsonString);
-					lastPassword = password;
-					break;
-				} catch (JSONException e) {
-					if (e.getMessage().startsWith("A JSONArray text must start with '['")) {
-						e.printStackTrace();
-						password = JOptionPane.showInputDialog("Invalid JSON, try decrypting it with a password.");
-					} else {
-						e.printStackTrace();
-						break;
-					}
+		// Open encrypted file
+		byte[][] data = null; 
+		try {
+			data = FileManager.readObjectFromFile(file, byte[][].class);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			return;
+		}
+		String jsonString = new String();
+		do {
+			try {
+				char[] password = PasswordDialog
+						.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
+				if (password == null) {
+					// Start the program without loading a file
+					return;
 				}
+				jsonString = Encryption.decrypt(data, password);
+				lastPassword = password;
+				break;
+			} catch (InvalidPasswordException e) {
+				continue;
 			}
-			lastJSONString = jsonString;
-		} else
-			accounts = new ArrayList<Account>();
+		} while (jsonString.toCharArray()[0] != '[');
+		accounts = parseJSON(jsonString);
+		lastJSONString = jsonString;
 		window.refresh();
 	}
 
@@ -112,17 +130,20 @@ public class AccountManager {
 	public static void saveFile(boolean saveAs) {
 		try {
 			String newData = exportJSON();
-			String encryptedData = null;
+			byte[][] encryptedData = null;
 			if (saveWithEncryption) {
-				while (lastPassword == null || lastPassword.isEmpty()) {
-					lastPassword = JOptionPane.showInputDialog("Select a password to encrypt the account file with.");
+				while (lastPassword == null || lastPassword.length < 5) {
+					lastPassword = PasswordDialog
+							.showPasswordDialog("Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
 				}
 				encryptedData = Encryption.encrypt(newData, lastPassword);
 			}
-
-			FileManager.writeStringToFile(saveAs, encryptedData == null ? newData : encryptedData);
+			if (encryptedData == null)
+				FileManager.writeStringToFile(saveAs, newData);
+			else
+				FileManager.writeObjectToFile(saveAs, encryptedData);
 			lastJSONString = newData;
-		} catch (FileNotFoundException e1) {
+		} catch (ClassNotFoundException | IOException e1) {
 			e1.printStackTrace();
 		}
 	}
@@ -130,7 +151,8 @@ public class AccountManager {
 	/**
 	 * Asks the user to save the current file if any changes have been made.
 	 * 
-	 * @return <code>false</code> if the user clicked cancel. True otherwise.
+	 * @return <code>false</code> if the user clicked cancel. <code>true</code>
+	 *         otherwise.
 	 */
 	public static boolean closeFile() {
 		if (!AccountManager.hasUnsavedChanges()) {
@@ -175,7 +197,6 @@ public class AccountManager {
 		JSONArray jsonArr = new JSONArray();
 		for (Account a : accounts)
 			jsonArr.put(new JSONObject(a));
-		System.out.println(jsonArr.toString());
 		return jsonArr.toString();
 	}
 
@@ -194,10 +215,17 @@ public class AccountManager {
 		window.refresh();
 	}
 
+	/**
+	 * Searches the list of accounts for ones matching the search string by name
+	 * or account number.
+	 * 
+	 * @param s
+	 *            The search string
+	 * @return The list of matching accounts
+	 */
 	public static List<Account> search(String s) {
-		return Arrays.asList(accounts.stream()
-				.filter(a -> a.getAccountNumber().toLowerCase().contains(s) || a.toString().toLowerCase().contains(s))
-				.toArray(Account[]::new));
+		return Arrays.asList(accounts.stream().filter(a -> a.getAccountNumber().toLowerCase().contains(s.toLowerCase())
+				|| a.toString().toLowerCase().contains(s.toLowerCase())).toArray(Account[]::new));
 	}
 
 	public static List<Account> getAccounts() {
@@ -212,6 +240,14 @@ public class AccountManager {
 	 */
 	public static Optional<Account> getAccountByNumber(String accountNumber) {
 		return accounts.stream().filter(a -> a.getAccountNumber().equals(accountNumber)).findFirst();
+	}
+
+	public static boolean isSavingWithEncryption() {
+		return saveWithEncryption;
+	}
+
+	public static void setSaveWithEncryption(boolean saveWithEncryption) {
+		AccountManager.saveWithEncryption = saveWithEncryption;
 	}
 
 }

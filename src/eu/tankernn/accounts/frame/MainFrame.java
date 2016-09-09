@@ -20,13 +20,14 @@ import javax.swing.event.ListSelectionListener;
 import eu.tankernn.accounts.Account;
 import eu.tankernn.accounts.AccountManager;
 import eu.tankernn.accounts.frame.menu.MainMenuBar;
+import eu.tankernn.accounts.util.GUIUtils;
 
 public class MainFrame implements ListSelectionListener, DocumentListener {
 	
 	private JFrame frame;
 	private LayoutManager manager;
 	
-	// Graphics components
+	// GUI components
 	
 	private MainMenuBar menubar;
 	
@@ -70,18 +71,22 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 	private void initialize() {
 		manager = new BorderLayout();
 		menubar = new MainMenuBar(this);
-		search = new JTextField();
+		search = new JTextField("Search...");
 		accounts = new JList<Account>();
 		
 		frame = new JFrame();
 		frame.setLayout(manager);
 		frame.setJMenuBar(menubar);
 		
+		listPanel = new JPanel();
+		listPanel.setLayout(new BorderLayout());
 		search.getDocument().addDocumentListener(this);
+		listPanel.add(search, BorderLayout.NORTH);
 		accounts.addListSelectionListener(this);
 		accountScrollPane = new JScrollPane(accounts);
 		accountScrollPane.setPreferredSize(new Dimension(100, 100));
-		frame.add(accountScrollPane, BorderLayout.WEST);
+		listPanel.add(accountScrollPane, BorderLayout.CENTER);
+		frame.add(listPanel, BorderLayout.WEST);
 		
 		
 		accountPanel = new AccountPanel();
