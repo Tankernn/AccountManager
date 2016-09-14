@@ -62,6 +62,7 @@ public class AccountManager {
 			//If '[' is first, the JSON is *probably* valid
 			if (jsonString.startsWith("[")) {
 				accounts = parseJSON(jsonString);
+				lastPassword = null;
 				lastJSONString = jsonString;
 				return;
 			}
