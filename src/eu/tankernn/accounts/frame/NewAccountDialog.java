@@ -24,11 +24,11 @@ public class NewAccountDialog {
 	}
 
 	public String getFirstName() {
-		return firstName.getText();
+		return firstName.getText().trim();
 	}
 
 	public String getLastName() {
-		return lastName.getText();
+		return lastName.getText().trim();
 	}
 
 	public int getResult() {
