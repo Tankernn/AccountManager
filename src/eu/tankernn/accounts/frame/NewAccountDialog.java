@@ -24,11 +24,11 @@ public class NewAccountDialog {
 	}
 
 	public String getFirstName() {
-		return firstName.getText().trim();
+		return formatName(firstName.getText());
 	}
 
 	public String getLastName() {
-		return lastName.getText().trim();
+		return formatName(firstName.getText());
 	}
 
 	public int getResult() {
@@ -46,5 +46,9 @@ public class NewAccountDialog {
 		
 		return true;
 	}
-
+	
+	private String formatName(String name) {
+		name = name.trim();
+		return Character.isUpperCase(name.charAt(0)) ? name : name.substring(0, 1).toUpperCase() + name.substring(1);
+	}
 }
