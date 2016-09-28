@@ -21,15 +21,25 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
+
 public class Encryption {
 
 	private static final String CIPHER_TYPE = "AES/GCM/PKCS5Padding";
-	public static final String HEX_STRING_SEPARATOR = "#";
+	public static final String STRING_SEPARATOR = "#";
 
-	public static String decryptHexEncoded(String dataString, char[] password) throws InvalidPasswordException {
-		String[] splitted = dataString.split(HEX_STRING_SEPARATOR);
-		
-		byte[][] encryptedComplex = (byte[][]) Arrays.asList(splitted).stream().map(s -> hexToBytes(s)).toArray();
+	public static String decryptEncoded(String dataString, char[] password) throws InvalidPasswordException {
+		String[] splitted = dataString.split(STRING_SEPARATOR);
+
+		byte[][] encryptedComplex = (byte[][]) Arrays.asList(splitted).stream().map(s -> {
+			try {
+				return Hex.decodeHex(s.toCharArray());
+			} catch (DecoderException e) {
+				return Base64.decodeBase64(s);
+			}
+		}).toArray();
 
 		return decrypt(encryptedComplex, password);
 	}
@@ -38,15 +48,14 @@ public class Encryption {
 	 * Decrypts an encrypted string of data.
 	 * 
 	 * @param data
-	 *            A hex-coded string with the format 'SALT#IV#DATA'
+	 *            A Base64-encoded string with the format 'SALT#IV#DATA'
 	 * @param password
-	 *            The password used when the string was encoded
+	 *            The password used when the string was encrypted
 	 * @return The decrypted string
 	 * @throws InvalidPasswordException
 	 *             if the password is incorrect
 	 */
 	public static String decrypt(byte[][] data, char[] password) throws InvalidPasswordException {
-
 		return decrypt(data[0], data[1], data[2], password);
 	}
 
@@ -69,14 +78,14 @@ public class Encryption {
 		}
 	}
 
-	public static String encryptHexEncoded(String data, char[] password) {
+	public static String encryptEncoded(String data, char[] password) {
 		byte[][] encryptedComplex = encrypt(data, password);
 
-		String saltString = bytesToHex(encryptedComplex[0]);
-		String ivString = bytesToHex(encryptedComplex[1]);
-		String dataString = bytesToHex(encryptedComplex[2]);
+		String saltString = Base64.encodeBase64String(encryptedComplex[0]);
+		String ivString = Base64.encodeBase64String(encryptedComplex[1]);
+		String dataString = Base64.encodeBase64String(encryptedComplex[2]);
 
-		return String.join(HEX_STRING_SEPARATOR, saltString, ivString, dataString);
+		return String.join(STRING_SEPARATOR, saltString, ivString, dataString);
 	}
 
 	/**
@@ -143,29 +152,5 @@ public class Encryption {
 			System.out.println("Wrong password");
 		}
 		System.out.println(decrypted);
-	}
-
-	// Conversion methods, fetched from stackoverflow.com
-
-	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-
-	public static String bytesToHex(byte[] bytes) {
-		// Array to hold the chars, two chars for each byte
-		char[] hexChars = new char[bytes.length * 2];
-		for (int j = 0; j < bytes.length; j++) {
-			int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = hexArray[v >>> 4];
-			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		}
-		return new String(hexChars);
-	}
-
-	public static byte[] hexToBytes(String s) {
-		int len = s.length();
-		byte[] data = new byte[len / 2];
-		for (int i = 0; i < len; i += 2) {
-			data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i + 1), 16));
-		}
-		return data;
 	}
 }
