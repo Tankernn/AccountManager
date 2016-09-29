@@ -36,15 +36,24 @@ public class FileManager {
 		return null;
 	}
 
+	public static void writeLastFileToCache(File file) {
+		FILE_CHOOSER.setSelectedFile(file);
+		// Remember this filename
+		if (!file.equals(lastFilenameCache))
+			try {
+				FileManager.writeStringToFile(lastFilenameCache, file.getAbsolutePath());
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+	}
+
 	public static String readFileAsString(File file) throws IOException {
 		if (file == null) {
 			FILE_CHOOSER.showOpenDialog(null);
 			file = FILE_CHOOSER.getSelectedFile();
 		}
 
-		// Remember this filename
-		if (!file.equals(lastFilenameCache))
-			FileManager.writeStringToFile(lastFilenameCache, file.getAbsolutePath());
+		writeLastFileToCache(file);
 
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		StringBuilder builder = new StringBuilder();
@@ -77,7 +86,7 @@ public class FileManager {
 
 		newFile.createNewFile();
 
-		FileManager.writeStringToFile(lastFilenameCache, newFile.getAbsolutePath());
+		writeLastFileToCache(newFile);
 		writeStringToFile(newFile, "[]");
 
 		return newFile;
@@ -115,7 +124,8 @@ public class FileManager {
 		return FILE_CHOOSER.getSelectedFile();
 	}
 
-	public static <T> T readObjectFromFile(File file, Class<T> class1) throws IOException, ClassNotFoundException {
+	public static <T> T readObjectFromFile(File file, Class<T> class1)
+			throws ClassNotFoundException, FileNotFoundException, IOException {
 		if (file == null) {
 			FILE_CHOOSER.showOpenDialog(null);
 			file = FILE_CHOOSER.getSelectedFile();
@@ -123,6 +133,7 @@ public class FileManager {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
 		T obj = class1.cast(in.readObject());
 		in.close();
+		writeLastFileToCache(file);
 		return obj;
 	}
 

@@ -1,4 +1,4 @@
-package eu.tankernn.accounts.util;
+package eu.tankernn.accounts.util.encryption;
 
 public class InvalidPasswordException extends Exception {
 

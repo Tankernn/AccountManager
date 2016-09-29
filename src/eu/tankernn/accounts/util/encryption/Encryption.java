@@ -1,4 +1,4 @@
-package eu.tankernn.accounts.util;
+package eu.tankernn.accounts.util.encryption;
 
 import java.io.UnsupportedEncodingException;
 import java.security.AlgorithmParameters;
@@ -9,7 +9,6 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
-import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -21,53 +20,39 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class Encryption {
-
+	
 	private static final String CIPHER_TYPE = "AES/GCM/PKCS5Padding";
-	public static final String STRING_SEPARATOR = "#";
+	private static final Gson GSON = new GsonBuilder().registerTypeAdapter(EncryptedComplex.class, new EncryptedComplexSerializer()).setPrettyPrinting().create();
 
 	public static String decryptEncoded(String dataString, char[] password) throws InvalidPasswordException {
-		String[] splitted = dataString.split(STRING_SEPARATOR);
-
-		byte[][] encryptedComplex = (byte[][]) Arrays.asList(splitted).stream().map(s -> {
-			try {
-				return Hex.decodeHex(s.toCharArray());
-			} catch (DecoderException e) {
-				return Base64.decodeBase64(s);
-			}
-		}).toArray();
-
-		return decrypt(encryptedComplex, password);
+		EncryptedComplex ec = GSON.fromJson(dataString, EncryptedComplex.class);
+		return decrypt(ec, password);
 	}
 
 	/**
 	 * Decrypts an encrypted string of data.
 	 * 
-	 * @param data
-	 *            A Base64-encoded string with the format 'SALT#IV#DATA'
+	 * @param ec
+	 *            An object containing all the data needed to restore the
+	 *            original
 	 * @param password
 	 *            The password used when the string was encrypted
 	 * @return The decrypted string
 	 * @throws InvalidPasswordException
 	 *             if the password is incorrect
 	 */
-	public static String decrypt(byte[][] data, char[] password) throws InvalidPasswordException {
-		return decrypt(data[0], data[1], data[2], password);
-	}
-
-	private static String decrypt(byte[] salt, byte[] iv, byte[] data, char[] password)
-			throws InvalidPasswordException {
+	public static String decrypt(EncryptedComplex ec, char[] password) throws InvalidPasswordException {
 		try {
-			SecretKey secret = composeKey(salt, password);
+			SecretKey secret = composeKey(ec.getSalt(), password);
 			Cipher cipher = Cipher.getInstance(CIPHER_TYPE);
 
-			GCMParameterSpec params = new GCMParameterSpec(128, iv);
+			GCMParameterSpec params = new GCMParameterSpec(128, ec.getIV());
 			cipher.init(Cipher.DECRYPT_MODE, secret, params);
-			String plainText = new String(cipher.doFinal(data), "UTF-8");
+			String plainText = new String(cipher.doFinal(ec.getData()), "UTF-8");
 			return plainText;
 		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
 				| InvalidKeySpecException | UnsupportedEncodingException | InvalidAlgorithmParameterException e) {
@@ -79,13 +64,8 @@ public class Encryption {
 	}
 
 	public static String encryptEncoded(String data, char[] password) {
-		byte[][] encryptedComplex = encrypt(data, password);
-
-		String saltString = Base64.encodeBase64String(encryptedComplex[0]);
-		String ivString = Base64.encodeBase64String(encryptedComplex[1]);
-		String dataString = Base64.encodeBase64String(encryptedComplex[2]);
-
-		return String.join(STRING_SEPARATOR, saltString, ivString, dataString);
+		EncryptedComplex ec = encrypt(data, password);
+		return GSON.toJson(ec);
 	}
 
 	/**
@@ -98,7 +78,7 @@ public class Encryption {
 	 * @return All information needed to get the original data back, except the
 	 *         password.
 	 */
-	public static byte[][] encrypt(String data, char[] password) {
+	public static EncryptedComplex encrypt(String data, char[] password) {
 		return encrypt(new SecureRandom().generateSeed(8), data, password);
 	}
 
@@ -108,10 +88,10 @@ public class Encryption {
 	 * @param salt
 	 * @param data
 	 * @param password
-	 * @return A two-dimensional byte array where [0] is the salt bytes, [1] is
-	 *         the IV bytes and [2] is the encrypted data bytes.
+	 * @return An object containing all information, except the password, needed
+	 *         to restore the original data.
 	 */
-	private static byte[][] encrypt(byte[] salt, String data, char[] password) {
+	private static EncryptedComplex encrypt(byte[] salt, String data, char[] password) {
 		try {
 			SecretKey secret = composeKey(salt, password);
 			Cipher cipher = Cipher.getInstance(CIPHER_TYPE);
@@ -120,7 +100,7 @@ public class Encryption {
 			byte[] iv = params.getParameterSpec(GCMParameterSpec.class).getIV();
 			byte[] cipherText = cipher.doFinal(data.getBytes());
 
-			return new byte[][] { salt, iv, cipherText };
+			return new EncryptedComplex(salt, iv, cipherText);
 		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
 				| BadPaddingException | InvalidKeySpecException | InvalidParameterSpecException e) {
 			e.printStackTrace();
@@ -143,7 +123,7 @@ public class Encryption {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		byte[][] encrypted = encrypt("asd", "password".toCharArray());
+		EncryptedComplex encrypted = encrypt("asd", "password".toCharArray());
 		System.out.println(encrypted);
 		String decrypted = "";
 		try {

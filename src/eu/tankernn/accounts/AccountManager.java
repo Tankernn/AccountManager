@@ -3,6 +3,7 @@ package eu.tankernn.accounts;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,8 +17,9 @@ import org.json.JSONObject;
 
 import eu.tankernn.accounts.frame.MainFrame;
 import eu.tankernn.accounts.frame.PasswordDialog;
-import eu.tankernn.accounts.util.Encryption;
-import eu.tankernn.accounts.util.InvalidPasswordException;
+import eu.tankernn.accounts.util.encryption.EncryptedComplex;
+import eu.tankernn.accounts.util.encryption.Encryption;
+import eu.tankernn.accounts.util.encryption.InvalidPasswordException;
 
 public class AccountManager {
 	public static final String CURRENCY = "SEK";
@@ -56,47 +58,44 @@ public class AccountManager {
 	 *            The file to load
 	 */
 	public static void openFile(File file) {
-		// Open plain text file
+		Object data = null;
 		try {
-			String jsonString = FileManager.readFileAsString(file);
-			//If '[' is first, the JSON is *probably* valid
-			if (jsonString.startsWith("[")) {
-				accounts = parseJSON(jsonString);
-				lastPassword = null;
-				lastJSONString = jsonString;
-				return;
+			try {
+				// Try to read the file as a byte[][]
+				data = FileManager.readObjectFromFile(file, byte[][].class);
+			} catch (ObjectStreamException | ClassNotFoundException e1) {
+				// Read the file as string
+				data = FileManager.readFileAsString(file);
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-		// Open encrypted file
-		byte[][] data = null; 
-		try {
-			data = FileManager.readObjectFromFile(file, byte[][].class);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 			return;
 		}
 		String jsonString = new String();
-		do {
-			try {
-				char[] password = PasswordDialog
-						.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
-				if (password == null) {
-					// Start the program without loading a file
-					return;
+		// If '[' is first, the JSON is *probably* valid
+		if (data instanceof String && ((String) data).startsWith("[")) {
+			lastPassword = null;
+			jsonString = new String((String) data);
+		} else {
+			// Try to decrypt the string or byte[][]
+			do {
+				try {
+					char[] password = PasswordDialog
+							.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
+					if (password == null) {
+						// Start the program without loading a file
+						return;
+					}
+					jsonString = data instanceof String ? Encryption.decryptEncoded((String) data, password)
+							: Encryption.decrypt(new EncryptedComplex((byte[][]) data), password);
+					lastPassword = password;
+					break;
+				} catch (InvalidPasswordException e) {
+					continue;
 				}
-				jsonString = Encryption.decrypt(data, password);
-				lastPassword = password;
-				break;
-			} catch (InvalidPasswordException e) {
-				continue;
-			}
-		} while (jsonString.toCharArray()[0] != '[');
+			} while (jsonString.toCharArray()[0] != '[');
+		}
+		
 		accounts = parseJSON(jsonString);
 		lastJSONString = jsonString;
 		window.refresh();
@@ -131,20 +130,17 @@ public class AccountManager {
 	public static void saveFile(boolean saveAs) {
 		try {
 			String newData = exportJSON();
-			byte[][] encryptedData = null;
+			String encryptedData = new String(newData);
 			if (saveWithEncryption) {
 				while (lastPassword == null || lastPassword.length < 5) {
-					lastPassword = PasswordDialog
-							.showPasswordDialog("Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
+					lastPassword = PasswordDialog.showPasswordDialog(
+							"Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
 				}
-				encryptedData = Encryption.encrypt(newData, lastPassword);
+				encryptedData = Encryption.encryptEncoded(newData, lastPassword);
 			}
-			if (encryptedData == null)
-				FileManager.writeStringToFile(saveAs, newData);
-			else
-				FileManager.writeObjectToFile(saveAs, encryptedData);
+			FileManager.writeStringToFile(saveAs, encryptedData);
 			lastJSONString = newData;
-		} catch (ClassNotFoundException | IOException e1) {
+		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
 	}
