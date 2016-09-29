@@ -54,7 +54,7 @@ public class AccountPanel extends JPanel implements ActionListener {
 	public AccountPanel() {
 		this.setLayout(new BorderLayout());
 
-		format = new DecimalFormat("### ###.00");
+		format = new DecimalFormat("### ##0.00");
 		format.setGroupingUsed(true);
 		format.setGroupingSize(3);
 

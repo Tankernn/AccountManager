@@ -28,7 +28,7 @@ public class NewAccountDialog {
 	}
 
 	public String getLastName() {
-		return formatName(firstName.getText());
+		return formatName(lastName.getText());
 	}
 
 	public int getResult() {
