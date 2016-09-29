@@ -1,5 +1,7 @@
 package eu.tankernn.accounts.frame;
 
+import java.util.concurrent.CancellationException;
+
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -20,12 +22,18 @@ public class PasswordDialog {
 		result = JOptionPane.showConfirmDialog(null, new JComponent[] {label, password}, "Enter password", JOptionPane.OK_CANCEL_OPTION);
 	}
 	
-	public static char[] showPasswordDialog(String message) {
+	/**
+	 * Show a password input dialog.
+	 * @param message The message to display to the user when prompting for password.
+	 * @return The password entered
+	 * @throws CancellationException If the user clicks 'cancel'.
+	 */
+	public static char[] showPasswordDialog(String message) throws CancellationException {
 		PasswordDialog dialog = new PasswordDialog(message);
 		if (dialog.result == JOptionPane.OK_OPTION)
 			return dialog.password.getPassword();
 		else
-			return null;
+			throw new CancellationException();
 	}
 
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 
 import javax.swing.JOptionPane;
 
@@ -82,14 +83,13 @@ public class AccountManager {
 				try {
 					char[] password = PasswordDialog
 							.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
-					if (password == null) {
-						// Start the program without loading a file
-						return;
-					}
 					jsonString = data instanceof String ? Encryption.decryptEncoded((String) data, password)
 							: Encryption.decrypt(new EncryptedComplex((byte[][]) data), password);
 					lastPassword = password;
 					break;
+				} catch (CancellationException ex) {
+					// Start the program without loading a file
+					return;
 				} catch (InvalidPasswordException e) {
 					continue;
 				}
@@ -133,8 +133,13 @@ public class AccountManager {
 			String encryptedData = new String(newData);
 			if (saveWithEncryption) {
 				while (lastPassword == null || lastPassword.length < 5) {
-					lastPassword = PasswordDialog.showPasswordDialog(
-							"Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
+					try {
+						lastPassword = PasswordDialog.showPasswordDialog(
+								"Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
+					} catch (CancellationException ex) {
+						return;
+					}
+
 				}
 				encryptedData = Encryption.encryptEncoded(newData, lastPassword);
 			}
@@ -185,10 +190,6 @@ public class AccountManager {
 	 *         current list of accounts.
 	 */
 	public static String exportJSON() {
-//		JSONArray jsonArr = new JSONArray();
-//		for (Account a : accounts)
-//			jsonArr.put(new JSONObject(a));
-//		return jsonArr.toString();
 		return GSON.toJson(accounts);
 	}
 
