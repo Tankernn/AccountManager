@@ -11,9 +11,8 @@ import java.util.Optional;
 
 import javax.swing.JOptionPane;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import eu.tankernn.accounts.frame.MainFrame;
 import eu.tankernn.accounts.frame.PasswordDialog;
@@ -23,6 +22,7 @@ import eu.tankernn.accounts.util.encryption.InvalidPasswordException;
 
 public class AccountManager {
 	public static final String CURRENCY = "SEK";
+	public static final Gson GSON = new Gson();
 
 	private static String lastJSONString = "[]";
 	private static char[] lastPassword;
@@ -95,7 +95,7 @@ public class AccountManager {
 				}
 			} while (jsonString.toCharArray()[0] != '[');
 		}
-		
+
 		accounts = parseJSON(jsonString);
 		lastJSONString = jsonString;
 		window.refresh();
@@ -173,15 +173,9 @@ public class AccountManager {
 		}
 	}
 
-	private static List<Account> parseJSON(String jsonString) throws JSONException {
-		List<Account> parsedAccounts = new ArrayList<Account>();
-
-		JSONArray array = new JSONArray(jsonString);
-
-		for (int i = 0; i < array.length(); i++)
-			parsedAccounts.add(Account.fromJSON(array.getJSONObject(i)));
-
-		return parsedAccounts;
+	private static List<Account> parseJSON(String jsonString) {
+		return GSON.fromJson(jsonString, new TypeToken<ArrayList<Account>>() {
+		}.getType());
 	}
 
 	/**
@@ -191,10 +185,11 @@ public class AccountManager {
 	 *         current list of accounts.
 	 */
 	public static String exportJSON() {
-		JSONArray jsonArr = new JSONArray();
-		for (Account a : accounts)
-			jsonArr.put(new JSONObject(a));
-		return jsonArr.toString();
+//		JSONArray jsonArr = new JSONArray();
+//		for (Account a : accounts)
+//			jsonArr.put(new JSONObject(a));
+//		return jsonArr.toString();
+		return GSON.toJson(accounts);
 	}
 
 	public static boolean hasUnsavedChanges() {
