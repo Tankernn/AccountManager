@@ -42,6 +42,7 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		// Weird hack to make the save dialog display on Cmd + q
 		System.setProperty("apple.eawt.quitStrategy", "CLOSE_ALL_WINDOWS");
 		
 		EventQueue.invokeLater(new Runnable() {
@@ -95,6 +96,7 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		frame.setTitle("Account Management System");
 		frame.pack();
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		// Ask the user to save changes before quitting
 		frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent ev) {
             	if (AccountManager.closeFile()) {
@@ -116,10 +118,12 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 	}
 	
 	private void search() {
-		String s = search.getText();
+		String s = search.getText().trim();
 		accounts.setModel(GUIUtils.listModelFromList(AccountManager.search(s)));
 	}
-
+	
+	// Update list on search field change
+	
 	@Override
 	public void insertUpdate(DocumentEvent e) {
 		search();

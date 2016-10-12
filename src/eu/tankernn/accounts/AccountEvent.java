@@ -1,5 +1,10 @@
 package eu.tankernn.accounts;
 
+/**
+ * Describes an event in an account's history.
+ * @author frans
+ *
+ */
 public class AccountEvent {
 	
 	private final double balanceChange;

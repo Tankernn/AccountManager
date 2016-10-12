@@ -44,7 +44,9 @@ public class AccountManager {
 	public static void init(MainFrame window) {
 		AccountManager.window = window;
 		accounts = new ArrayList<Account>();
-		openFile(FileManager.getLastFileFromCache());
+		File f = FileManager.getLastFileFromCache();
+		if (f != null)
+			openFile(f);
 	}
 
 	public static void openFile() {
@@ -68,6 +70,8 @@ public class AccountManager {
 				// Read the file as string
 				data = FileManager.readFileAsString(file);
 			}
+		} catch (FileNotFoundException e) {
+			return;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
@@ -110,7 +114,7 @@ public class AccountManager {
 			return;
 
 		try {
-			FileManager.newEmptyJSONFile();
+			FileManager.newFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;

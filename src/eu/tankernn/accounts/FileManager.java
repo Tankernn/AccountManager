@@ -29,29 +29,37 @@ public class FileManager {
 				return null;
 			}
 			String lastFilePath = FileManager.readFileAsString(lastFilenameCache);
-			return new File(lastFilePath);
+			File f = new File(lastFilePath);
+			FILE_CHOOSER.setSelectedFile(f);
+			return f;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	public static void writeLastFileToCache(File file) {
-		FILE_CHOOSER.setSelectedFile(file);
+	private static void writeLastFileToCache(File file) {
 		// Remember this filename
-		if (!file.equals(lastFilenameCache))
+		if (!file.equals(lastFilenameCache)) { // Don't remember the cache file
 			try {
-				FileManager.writeStringToFile(lastFilenameCache, file.getAbsolutePath());
+				writeStringToFile(lastFilenameCache, file.getAbsolutePath());
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
+			FILE_CHOOSER.setSelectedFile(file);
+		}
+		
 	}
 
 	public static String readFileAsString(File file) throws IOException {
 		if (file == null) {
-			FILE_CHOOSER.showOpenDialog(null);
-			file = FILE_CHOOSER.getSelectedFile();
+			if (FILE_CHOOSER.showOpenDialog(null) == JFileChooser.CANCEL_OPTION)
+				throw new FileNotFoundException();
+			else
+				file = FILE_CHOOSER.getSelectedFile();
 		}
+		
+		System.out.println("Opening file " + file.getAbsolutePath());
 
 		writeLastFileToCache(file);
 
@@ -67,12 +75,12 @@ public class FileManager {
 	}
 
 	/**
-	 * Creates a new file containing an empty JSON array.
+	 * Creates a new file.
 	 * 
 	 * @return The <code>File</code> object that represents the new file.
 	 * @throws IOException
 	 */
-	public static File newEmptyJSONFile() throws IOException {
+	public static File newFile() throws IOException {
 		int result = FILE_CHOOSER.showDialog(null, "Create file");
 		if (result != JFileChooser.APPROVE_OPTION)
 			return null;
@@ -87,7 +95,6 @@ public class FileManager {
 		newFile.createNewFile();
 
 		writeLastFileToCache(newFile);
-		writeStringToFile(newFile, "[]");
 
 		return newFile;
 	}
