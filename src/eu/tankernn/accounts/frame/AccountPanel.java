@@ -119,19 +119,24 @@ public class AccountPanel extends JPanel implements ActionListener {
 		if (src.equals(transferFrom)) {
 			double amount = showAmountDialog("transfer");
 
-			if (amount <= 0 || amount > currentAccount.calculateBalance()) {
+			if (amount <= 0) {
+				return;
+			} else if (amount > currentAccount.calculateBalance()) {
 				JOptionPane.showMessageDialog(null, "Invalid amount.");
 				return;
 			}
 
-			JOptionPane.showConfirmDialog(null,
+			int result = JOptionPane.showConfirmDialog(null,
 					new JComponent[] { new JLabel("Please select receiver account."), otherAccounts },
-					"Select account.", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
-
+					"Select account.", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+			
+			if (result != JOptionPane.OK_OPTION)
+				return;
+			
 			Account sender = currentAccount, receiver = (Account) otherAccounts.getSelectedItem();
 
-			sender.getHistory().add(new AccountEvent(-amount, "Transferred " + amount + " to " + receiver + "."));
-			receiver.getHistory().add(new AccountEvent(amount, "Received " + amount + " from " + sender + "."));
+			sender.getHistory().add(new AccountEvent(-amount, "Transferred %.2f to " + receiver + "."));
+			receiver.getHistory().add(new AccountEvent(amount, "Received %.2f from " + sender + "."));
 		} else if (src.equals(deposit)) {
 			double amount = showAmountDialog("deposit");
 
@@ -140,7 +145,7 @@ public class AccountPanel extends JPanel implements ActionListener {
 				return;
 			}
 
-			currentAccount.getHistory().add(new AccountEvent(amount, "User deposited " + amount + "."));
+			currentAccount.getHistory().add(new AccountEvent(amount, "User deposited %.2f."));
 		} else if (src.equals(withdraw)) {
 			double amount = showAmountDialog("withdraw");
 
@@ -152,21 +157,23 @@ public class AccountPanel extends JPanel implements ActionListener {
 				return;
 			}
 
-			currentAccount.getHistory().add(new AccountEvent(-amount, "User withdrew " + amount + "."));
+			currentAccount.getHistory().add(new AccountEvent(-amount, "User withdrew %.2f."));
 		}
 
 		this.updatePanel(currentAccount);
 	}
 
 	private double showAmountDialog(String action) {
-		String amountStr = JOptionPane.showInputDialog("Amount to " + action + ":");
-
+		String amountStr;
 		double amount = -1;
 		while (amount == -1)
 			try {
+				amountStr = JOptionPane.showInputDialog("Amount to " + action + ":");
 				amount = Double.parseDouble(amountStr);
 			} catch (NumberFormatException ex) {
 				JOptionPane.showMessageDialog(null, "Please enter a valid number value.");
+			} catch (NullPointerException ex) {
+				break;
 			}
 		return amount;
 	}
