@@ -7,8 +7,8 @@ import java.util.List;
 
 public class Account {
 	
-	private List<AccountEvent> history;
 	private String firstName, lastName, accountNumber;
+	private List<AccountEvent> history;
 
 	public Account(String firstName, String lastName) {
 		// Generate a random, unique account id
@@ -18,6 +18,13 @@ public class Account {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.history = new ArrayList<AccountEvent>();
+	}
+	
+	Account(String firstName, String lastName, String accountNumber, List<AccountEvent> history) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.accountNumber = accountNumber;
+		this.history = history;
 	}
 
 	public String getFirstName() {

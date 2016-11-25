@@ -122,6 +122,7 @@ public class AccountManager {
 
 		accounts.clear();
 		lastJSONString = exportJSON();
+		window.refresh();
 	}
 
 	/**
@@ -161,9 +162,7 @@ public class AccountManager {
 	 *         otherwise.
 	 */
 	public static boolean closeFile() {
-		if (!AccountManager.hasUnsavedChanges()) {
-			return true;
-		} else {
+		if (AccountManager.hasUnsavedChanges()) {
 			int option = JOptionPane.showOptionDialog(null, "Would you like to save changes before exit?",
 					"Save changes", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, 0);
 
@@ -174,12 +173,16 @@ public class AccountManager {
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				}
+				break;
 			case JOptionPane.NO_OPTION:
-				return true;
+				break;
 			default:
 				return false;
 			}
 		}
+		accounts.clear();
+		window.refresh();
+		return true;
 	}
 
 	private static List<Account> parseJSON(String jsonString) {

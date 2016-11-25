@@ -17,7 +17,7 @@ public class AccountEvent {
 	 * @param balanceChange The change in account balance.
 	 * @param descriptionFormat
 	 *            A string that will be used for a <code>String.format()</code>
-	 *            call, along with the absolute balance chage value.
+	 *            call, along with the absolute balance change value.
 	 */
 	public AccountEvent(double balanceChange, String descriptionFormat) {
 		this.balanceChange = balanceChange;
