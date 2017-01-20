@@ -5,10 +5,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
@@ -47,6 +47,8 @@ public class AccountManager {
 		File f = FileManager.getLastFileFromCache();
 		if (f != null)
 			openFile(f);
+		else
+			newFile();
 	}
 
 	public static void openFile() {
@@ -224,8 +226,9 @@ public class AccountManager {
 	 * @return The list of matching accounts
 	 */
 	public static List<Account> search(String s) {
-		return Arrays.asList(accounts.stream().filter(a -> a.getAccountNumber().toLowerCase().contains(s.toLowerCase())
-				|| a.toString().toLowerCase().contains(s.toLowerCase())).toArray(Account[]::new));
+		return accounts.stream().filter(a -> a.getAccountNumber().toLowerCase().contains(s.toLowerCase())
+				|| a.toString().toLowerCase().contains(s.toLowerCase())).collect(Collectors.toList());
+
 	}
 
 	public static List<Account> getAccounts() {

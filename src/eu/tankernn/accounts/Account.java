@@ -48,13 +48,7 @@ public class Account {
 	}
 
 	public double calculateBalance() {
-		double newBalance = 0;
-		
-		for (AccountEvent e : history) {
-			newBalance += e.getBalanceChange();
-		}
-		
-		return newBalance;
+		return history.stream().mapToDouble(a -> a.getBalanceChange()).sum();
 	}
 
 }
