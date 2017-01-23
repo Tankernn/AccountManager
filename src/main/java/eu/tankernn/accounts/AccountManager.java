@@ -15,7 +15,6 @@ import javax.swing.JOptionPane;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import eu.tankernn.accounts.frame.MainFrame;
 import eu.tankernn.accounts.frame.PasswordDialog;
 import eu.tankernn.accounts.util.encryption.EncryptedComplex;
 import eu.tankernn.accounts.util.encryption.Encryption;
@@ -30,25 +29,30 @@ public class AccountManager {
 	private static boolean saveWithEncryption = true;
 
 	private static List<Account> accounts;
-
-	private static MainFrame window;
+	
+	/**
+	 * Called when account list changes.
+	 */
+	private static Runnable refresh;
 
 	/**
 	 * Initializes the account list using the last file opened, if available.
 	 * Otherwise creates an empty list.
 	 * 
-	 * @param window
-	 *            The <code>MainFrame</code> instance that will be updated once
-	 *            the file has been loaded
+	 * @param refresh
+	 *            A runnable that gets called when the account list changes.
 	 */
-	public static void init(MainFrame window) {
-		AccountManager.window = window;
+	public static void init(Runnable refresh, boolean openLast) {
+		AccountManager.refresh = refresh;
 		accounts = new ArrayList<Account>();
-		File f = FileManager.getLastFileFromCache();
-		if (f != null)
-			openFile(f);
-		else
-			newFile();
+		File f = null;
+		if (openLast) {
+			f = FileManager.getLastFileFromCache();
+			if (f != null)
+				openFile(f);
+			else
+				newFile();
+		}
 	}
 
 	public static void openFile() {
@@ -104,7 +108,7 @@ public class AccountManager {
 
 		accounts = parseJSON(jsonString);
 		lastJSONString = jsonString;
-		window.refresh();
+		refresh.run();
 	}
 
 	/**
@@ -114,17 +118,13 @@ public class AccountManager {
 	public static void newFile() {
 		if (!closeFile())
 			return;
-
-		try {
-			FileManager.newFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-
+		
+		FileManager.writeLastFileToCache(null);
+		
+		lastPassword = null;
 		accounts.clear();
 		lastJSONString = exportJSON();
-		window.refresh();
+		refresh.run();
 	}
 
 	/**
@@ -183,7 +183,7 @@ public class AccountManager {
 			}
 		}
 		accounts.clear();
-		window.refresh();
+		refresh.run();
 		return true;
 	}
 
@@ -214,7 +214,7 @@ public class AccountManager {
 	 */
 	public static void addAccount(Account account) {
 		accounts.add(account);
-		window.refresh();
+		refresh.run();
 	}
 
 	/**

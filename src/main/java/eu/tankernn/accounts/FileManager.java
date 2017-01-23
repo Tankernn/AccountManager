@@ -8,10 +8,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 
 public class FileManager {
 	public static final JFileChooser FILE_CHOOSER = new JFileChooser("data/");
@@ -38,7 +36,9 @@ public class FileManager {
 		return null;
 	}
 
-	private static void writeLastFileToCache(File file) {
+	public static void writeLastFileToCache(File file) {
+		if (file == null)
+			lastFilenameCache.delete();
 		// Remember this filename
 		if (!file.equals(lastFilenameCache)) { // Don't remember the cache file
 			try {
@@ -74,32 +74,9 @@ public class FileManager {
 		return builder.toString();
 	}
 
-	/**
-	 * Creates a new file.
-	 * 
-	 * @return The <code>File</code> object that represents the new file.
-	 * @throws IOException
-	 */
-	public static File newFile() throws IOException {
-		int result = FILE_CHOOSER.showDialog(null, "Create file");
-		if (result != JFileChooser.APPROVE_OPTION)
-			return null;
-
-		File newFile = FILE_CHOOSER.getSelectedFile();
-
-		if (newFile.exists()) {
-			JOptionPane.showMessageDialog(null, "That file already exists.");
-			return null;
-		}
-
-		newFile.createNewFile();
-
-		writeLastFileToCache(newFile);
-
-		return newFile;
-	}
-
 	public static void writeStringToFile(boolean saveAs, String contents) throws FileNotFoundException {
+		if (getLastFileFromCache() == null)
+			saveAs = true;
 		if (saveAs)
 			FILE_CHOOSER.showSaveDialog(null);
 		writeStringToFile(saveAs ? FILE_CHOOSER.getSelectedFile() : getLastFileFromCache(), contents);
@@ -142,17 +119,5 @@ public class FileManager {
 		in.close();
 		writeLastFileToCache(file);
 		return obj;
-	}
-
-	public static <T> void writeObjectToFile(boolean saveAs, T contents) throws ClassNotFoundException, IOException {
-		if (saveAs)
-			FILE_CHOOSER.showSaveDialog(null);
-		writeObjectToFile(saveAs ? FILE_CHOOSER.getSelectedFile() : getLastFileFromCache(), contents);
-	}
-
-	public static <T> void writeObjectToFile(File file, T obj) throws IOException, ClassNotFoundException {
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-		out.writeObject(obj);
-		out.close();
 	}
 }

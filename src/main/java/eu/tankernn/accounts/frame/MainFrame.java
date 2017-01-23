@@ -23,19 +23,19 @@ import eu.tankernn.accounts.frame.menu.MainMenuBar;
 import eu.tankernn.accounts.util.GUIUtils;
 
 public class MainFrame implements ListSelectionListener, DocumentListener {
-	
+
 	private JFrame frame;
 	private LayoutManager manager;
-	
+
 	// GUI components
-	
+
 	private MainMenuBar menubar;
-	
+
 	private JPanel listPanel;
 	private JTextField search;
 	private JList<Account> accounts;
 	private JScrollPane accountScrollPane;
-	
+
 	private AccountPanel accountPanel;
 
 	/**
@@ -45,17 +45,15 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		// Weird hack to make the save dialog display on Cmd + q
 		System.setProperty("apple.eawt.quitStrategy", "CLOSE_ALL_WINDOWS");
 		
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
+		EventQueue.invokeLater(() -> {
 				try {
 					MainFrame window = new MainFrame();
-					AccountManager.init(window);
+					AccountManager.init(window::refresh, true);
 					window.refresh();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}
 		});
 	}
 
@@ -74,11 +72,11 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		menubar = new MainMenuBar(this);
 		search = new JTextField("Search...");
 		accounts = new JList<Account>();
-		
+
 		frame = new JFrame();
 		frame.setLayout(manager);
 		frame.setJMenuBar(menubar);
-		
+
 		listPanel = new JPanel();
 		listPanel.setLayout(new BorderLayout());
 		search.getDocument().addDocumentListener(this);
@@ -88,24 +86,23 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		accountScrollPane.setPreferredSize(new Dimension(100, 100));
 		listPanel.add(accountScrollPane, BorderLayout.CENTER);
 		frame.add(listPanel, BorderLayout.WEST);
-		
-		
+
 		accountPanel = new AccountPanel();
 		frame.add(accountPanel, BorderLayout.EAST);
-		
+
 		frame.setTitle("Account Management System");
 		frame.pack();
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		// Ask the user to save changes before quitting
 		frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent ev) {
-            	if (AccountManager.closeFile()) {
-            		frame.dispose();
-            	}
-            }
-        });
+			public void windowClosing(WindowEvent ev) {
+				if (AccountManager.closeFile()) {
+					frame.dispose();
+				}
+			}
+		});
 	}
-	
+
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		if (accounts.getSelectedValue() != null)
@@ -116,14 +113,14 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		accounts.setModel(GUIUtils.listModelFromList(AccountManager.getAccounts()));
 		accountPanel.updatePanel(null);
 	}
-	
+
 	private void search() {
 		String s = search.getText().trim();
 		accounts.setModel(GUIUtils.listModelFromList(AccountManager.search(s)));
 	}
-	
+
 	// Update list on search field change
-	
+
 	@Override
 	public void insertUpdate(DocumentEvent e) {
 		search();
