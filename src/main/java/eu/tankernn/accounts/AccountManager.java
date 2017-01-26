@@ -1,9 +1,6 @@
 package eu.tankernn.accounts;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -16,8 +13,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import eu.tankernn.accounts.frame.PasswordDialog;
-import eu.tankernn.accounts.util.encryption.EncryptedComplex;
-import eu.tankernn.accounts.util.encryption.Encryption;
 import eu.tankernn.accounts.util.encryption.InvalidPasswordException;
 
 public class AccountManager {
@@ -25,11 +20,11 @@ public class AccountManager {
 	public static final Gson GSON = new Gson();
 
 	private static String lastJSONString = "[]";
-	private static char[] lastPassword;
 	private static boolean saveWithEncryption = true;
+	private static char[] lastPassword;
 
-	private static List<Account> accounts;
-	
+	private static List<Account> accounts = new ArrayList<Account>();
+
 	/**
 	 * Called when account list changes.
 	 */
@@ -44,67 +39,30 @@ public class AccountManager {
 	 */
 	public static void init(Runnable refresh, boolean openLast) {
 		AccountManager.refresh = refresh;
-		accounts = new ArrayList<Account>();
-		File f = null;
-		if (openLast) {
-			f = FileManager.getLastFileFromCache();
-			if (f != null)
-				openFile(f);
-			else
-				newFile();
-		}
-	}
-
-	public static void openFile() {
-		FileManager.FILE_CHOOSER.showOpenDialog(null);
-		openFile(FileManager.FILE_CHOOSER.getSelectedFile());
+		if (openLast)
+			openFile();
+		else
+			newFile();
 	}
 
 	/**
 	 * Loads the accounts in the file specified.
-	 * 
-	 * @param file
-	 *            The file to load
 	 */
-	public static void openFile(File file) {
-		Object data = null;
-		try {
+	public static void openFile() {
+		String jsonString;
+		lastPassword = null;
+		while (true)
 			try {
-				// Try to read the file as a byte[][]
-				data = FileManager.readObjectFromFile(file, byte[][].class);
-			} catch (ObjectStreamException | ClassNotFoundException e1) {
-				// Read the file as string
-				data = FileManager.readFileAsString(file);
+				jsonString = FileManager.openFile(lastPassword);
+				lastPassword = PasswordDialog
+						.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
+				break;
+			} catch (InvalidPasswordException e) {
+				continue;
+			} catch (IOException e) {
+				newFile();
+				return;
 			}
-		} catch (FileNotFoundException e) {
-			return;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-		String jsonString = new String();
-		// If '[' is first, the JSON is *probably* valid
-		if (data instanceof String && ((String) data).startsWith("[")) {
-			lastPassword = null;
-			jsonString = new String((String) data);
-		} else {
-			// Try to decrypt the string or byte[][]
-			do {
-				try {
-					char[] password = PasswordDialog
-							.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
-					jsonString = data instanceof String ? Encryption.decryptEncoded((String) data, password)
-							: Encryption.decrypt(new EncryptedComplex((byte[][]) data), password);
-					lastPassword = password;
-					break;
-				} catch (CancellationException ex) {
-					// Start the program without loading a file
-					return;
-				} catch (InvalidPasswordException e) {
-					continue;
-				}
-			} while (jsonString.toCharArray()[0] != '[');
-		}
 
 		accounts = parseJSON(jsonString);
 		lastJSONString = jsonString;
@@ -118,9 +76,9 @@ public class AccountManager {
 	public static void newFile() {
 		if (!closeFile())
 			return;
-		
+
 		FileManager.writeLastFileToCache(null);
-		
+
 		lastPassword = null;
 		accounts.clear();
 		lastJSONString = exportJSON();
@@ -135,26 +93,21 @@ public class AccountManager {
 	 *            new filename, or if the last filename should be used.
 	 */
 	public static void saveFile(boolean saveAs) {
-		try {
-			String newData = exportJSON();
-			String encryptedData = new String(newData);
-			if (saveWithEncryption) {
-				while (lastPassword == null || lastPassword.length < 5) {
-					try {
-						lastPassword = PasswordDialog.showPasswordDialog(
-								"Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
-					} catch (CancellationException ex) {
-						return;
-					}
-
+		String data = exportJSON();
+		if (saveWithEncryption) {
+			while (lastPassword == null || lastPassword.length < 5) {
+				try {
+					lastPassword = PasswordDialog.showPasswordDialog(
+							"Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
+				} catch (CancellationException ex) {
+					return;
 				}
-				encryptedData = Encryption.encryptEncoded(newData, lastPassword);
 			}
-			FileManager.writeStringToFile(saveAs, encryptedData);
-			lastJSONString = newData;
-		} catch (IOException e1) {
-			e1.printStackTrace();
+			FileManager.saveFile(data, saveAs, lastPassword);
+		} else {
+			FileManager.saveFile(data, saveAs);
 		}
+		lastJSONString = data;
 	}
 
 	/**
@@ -170,11 +123,7 @@ public class AccountManager {
 
 			switch (option) {
 			case JOptionPane.YES_OPTION:
-				try {
-					FileManager.writeStringToFile(false, AccountManager.exportJSON());
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
+				saveFile(false);
 				break;
 			case JOptionPane.NO_OPTION:
 				break;

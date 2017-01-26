@@ -28,5 +28,6 @@ public class AccountManagerTest {
 		Assert.assertEquals(aList, AccountManager.search(a.getAccountNumber()));
 		Assert.assertEquals(aList, AccountManager.search(a.getFirstName()));
 		Assert.assertEquals(aList, AccountManager.search(a.getLastName()));
+		Assert.assertEquals(a, AccountManager.getAccountByNumber(a.getAccountNumber()));
 	}
 }

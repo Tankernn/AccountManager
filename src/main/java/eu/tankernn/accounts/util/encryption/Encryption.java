@@ -116,21 +116,4 @@ public class Encryption {
 		SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 		return secret;
 	}
-
-	/**
-	 * Testing method for encryption functionality.
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		EncryptedComplex encrypted = encrypt("asd", "password".toCharArray());
-		System.out.println(encrypted);
-		String decrypted = "";
-		try {
-			decrypted = decrypt(encrypted, "password".toCharArray());
-		} catch (InvalidPasswordException e) {
-			System.out.println("Wrong password");
-		}
-		System.out.println(decrypted);
-	}
 }
