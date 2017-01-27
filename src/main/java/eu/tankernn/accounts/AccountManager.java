@@ -175,7 +175,7 @@ public class AccountManager {
 	 * @return The list of matching accounts
 	 */
 	public static List<Account> search(String s) {
-		return accounts.stream().filter(a -> a.getAccountNumber().toLowerCase().contains(s.toLowerCase())
+		return accounts.stream().filter(a -> a.accountNumber.toLowerCase().contains(s.toLowerCase())
 				|| a.toString().toLowerCase().contains(s.toLowerCase())).collect(Collectors.toList());
 
 	}
@@ -191,7 +191,7 @@ public class AccountManager {
 	 * @return The account, if it was found
 	 */
 	public static Optional<Account> getAccountByNumber(String accountNumber) {
-		return accounts.stream().filter(a -> a.getAccountNumber().equals(accountNumber)).findFirst();
+		return accounts.stream().filter(accountNumber::equals).findFirst();
 	}
 
 	public static boolean isSavingWithEncryption() {

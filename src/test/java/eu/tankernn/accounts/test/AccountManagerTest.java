@@ -25,9 +25,9 @@ public class AccountManagerTest {
 	public void testSearch() {
 		List<Account> aList = new ArrayList<>();
 		aList.add(a);
-		Assert.assertEquals(aList, AccountManager.search(a.getAccountNumber()));
-		Assert.assertEquals(aList, AccountManager.search(a.getFirstName()));
-		Assert.assertEquals(aList, AccountManager.search(a.getLastName()));
-		Assert.assertEquals(a, AccountManager.getAccountByNumber(a.getAccountNumber()));
+		Assert.assertEquals(aList, AccountManager.search(a.accountNumber));
+		Assert.assertEquals(aList, AccountManager.search(a.firstName));
+		Assert.assertEquals(aList, AccountManager.search(a.lastName));
+		Assert.assertEquals(a, AccountManager.getAccountByNumber(a.accountNumber));
 	}
 }
