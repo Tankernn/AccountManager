@@ -4,17 +4,16 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Account {
 
-	private String firstName, lastName, accountNumber;
-	private List<AccountEvent> history;
+	public final String firstName, lastName, accountNumber;
+	public final List<AccountEvent> history;
 
 	public Account(String firstName, String lastName) {
 		// Generate a random, unique account id
-		do {
-			accountNumber = new BigInteger(20, new SecureRandom()).toString();
-		} while (AccountManager.getAccountByNumber(accountNumber).isPresent());
+		accountNumber = Stream.generate(() -> new BigInteger(20, new SecureRandom()).toString()).limit(AccountManager.getAccounts().size() + 1).filter(num -> AccountManager.getAccountByNumber(num).isPresent()).findFirst().orElseThrow(() -> new ArrayIndexOutOfBoundsException());
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.history = new ArrayList<AccountEvent>();
@@ -27,29 +26,12 @@ public class Account {
 		this.history = history;
 	}
 
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
-	public List<AccountEvent> getHistory() {
-		return history;
-	}
-
-	public String getAccountNumber() {
-		return accountNumber;
-	}
-
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof Account))
 			return false;
 		Account other = (Account) obj;
-		return firstName.equals(other.firstName) && lastName.equals(other.lastName)
-				&& accountNumber.equals(other.accountNumber);
+		return firstName.equals(other.firstName) && lastName.equals(other.lastName) && accountNumber.equals(other.accountNumber);
 	}
 
 	public String toString() {
@@ -57,7 +39,7 @@ public class Account {
 	}
 
 	public double calculateBalance() {
-		return history.stream().mapToDouble(a -> a.getBalanceChange()).sum();
+		return history.stream().mapToDouble(a -> a.balanceChange).sum();
 	}
 
 }

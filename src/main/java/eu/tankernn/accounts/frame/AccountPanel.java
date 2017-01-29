@@ -92,8 +92,8 @@ public class AccountPanel extends JPanel implements ActionListener {
 		} else {
 			lName.setText("Name: " + a.toString());
 			lBalance.setText("Balance: " + AccountManager.CURRENCY + " " + format.format(a.calculateBalance()));
-			lAccountNumber.setText("Account number: " + a.getAccountNumber());
-			history.setModel(GUIUtils.listModelFromList(a.getHistory()));
+			lAccountNumber.setText("Account number: " + a.accountNumber);
+			history.setModel(GUIUtils.listModelFromList(a.history));
 
 			// "Clone" account list
 			List<Account> accounts = new ArrayList<Account>(AccountManager.getAccounts());
@@ -135,8 +135,8 @@ public class AccountPanel extends JPanel implements ActionListener {
 			
 			Account sender = currentAccount, receiver = (Account) otherAccounts.getSelectedItem();
 
-			sender.getHistory().add(new AccountEvent(-amount, "Transferred %.2f to " + receiver + "."));
-			receiver.getHistory().add(new AccountEvent(amount, "Received %.2f from " + sender + "."));
+			sender.history.add(new AccountEvent(-amount, "Transferred %.2f to " + receiver + "."));
+			receiver.history.add(new AccountEvent(amount, "Received %.2f from " + sender + "."));
 		} else if (src.equals(deposit)) {
 			double amount = showAmountDialog("deposit");
 
@@ -145,7 +145,7 @@ public class AccountPanel extends JPanel implements ActionListener {
 				return;
 			}
 
-			currentAccount.getHistory().add(new AccountEvent(amount, "User deposited %.2f."));
+			currentAccount.history.add(new AccountEvent(amount, "User deposited %.2f."));
 		} else if (src.equals(withdraw)) {
 			double amount = showAmountDialog("withdraw");
 
@@ -157,7 +157,7 @@ public class AccountPanel extends JPanel implements ActionListener {
 				return;
 			}
 
-			currentAccount.getHistory().add(new AccountEvent(-amount, "User withdrew %.2f."));
+			currentAccount.history.add(new AccountEvent(-amount, "User withdrew %.2f."));
 		}
 
 		this.updatePanel(currentAccount);

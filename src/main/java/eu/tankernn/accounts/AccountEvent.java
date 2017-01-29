@@ -8,8 +8,8 @@ package eu.tankernn.accounts;
  */
 public class AccountEvent {
 
-	private final double balanceChange;
-	private final String description;
+	public final double balanceChange;
+	public final String description;
 
 	/**
 	 * Creates a new account event.
@@ -22,14 +22,6 @@ public class AccountEvent {
 	public AccountEvent(double balanceChange, String descriptionFormat) {
 		this.balanceChange = balanceChange;
 		this.description = String.format(descriptionFormat, Math.abs(balanceChange));
-	}
-
-	public double getBalanceChange() {
-		return balanceChange;
-	}
-
-	public String getDescription() {
-		return description;
 	}
 
 	public String toString() {

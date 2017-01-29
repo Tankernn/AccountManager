@@ -50,10 +50,10 @@ public class DBManager {
 			try {
 				PreparedStatement ps = conn.prepareStatement(
 						"INSERT IGNORE INTO Accounts (firstName, lastName, accountNumber) VALUES (?, ?, ?)");
-				ps.setString(1, a.getFirstName());
-				ps.setString(2, a.getLastName());
-				ps.setString(3, a.getAccountNumber());
-				saveAccountEvents(a.getAccountNumber(), a.getHistory());
+				ps.setString(1, a.firstName);
+				ps.setString(2, a.lastName);
+				ps.setString(3, a.accountNumber);
+				saveAccountEvents(a.accountNumber, a.history);
 				ps.executeUpdate();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -83,8 +83,8 @@ public class DBManager {
 				PreparedStatement ps = conn.prepareStatement(
 						"INSERT INTO Events (account, balanceChange, description) VALUES (?, ?, ?)");
 				ps.setString(1, accountNumber);
-				ps.setDouble(2, e.getBalanceChange());
-				ps.setString(3, e.getDescription());
+				ps.setDouble(2, e.balanceChange);
+				ps.setString(3, e.description);
 				ps.executeUpdate();
 			} catch (SQLException ex) {
 				ex.printStackTrace();
