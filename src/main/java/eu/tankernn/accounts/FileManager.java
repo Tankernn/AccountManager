@@ -13,6 +13,8 @@ import java.io.ObjectStreamException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import eu.tankernn.accounts.util.encryption.EncryptedComplex;
 import eu.tankernn.accounts.util.encryption.Encryption;
 import eu.tankernn.accounts.util.encryption.InvalidPasswordException;
@@ -107,7 +109,7 @@ public class FileManager {
 
 	}
 
-	private static String readFileAsString(File file) throws IOException {
+	private static String readFileAsString(@NonNull File file) throws IOException {
 		writeLastFileToCache(file);
 
 		BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -121,11 +123,11 @@ public class FileManager {
 		return builder.toString();
 	}
 
-	private static void writeStringToFile(File file, String contents) {
+	private static void writeStringToFile(@NonNull File file, String contents) {
 		writeBytesToFile(file, contents.getBytes());
 	}
 
-	private static void writeBytesToFile(File file, byte[] data) {
+	private static void writeBytesToFile(@NonNull File file, byte[] data) {
 		try {
 			FileOutputStream writer = new FileOutputStream(file);
 			writer.write(data, 0, data.length);
@@ -139,7 +141,7 @@ public class FileManager {
 
 	}
 
-	public static <T> T readObjectFromFile(File file, Class<T> class1)
+	public static <T> T readObjectFromFile(@NonNull File file, Class<T> class1)
 			throws ClassNotFoundException, FileNotFoundException, IOException {
 		if (file == null) {
 			FILE_CHOOSER.showOpenDialog(null);

@@ -32,11 +32,52 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- annotations from the Checker Framework: nullness, interning, locking, 
+			... -->
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>checker-qual</artifactId>
+			<version>2.1.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>checker</artifactId>
+			<version>2.1.8</version>
+		</dependency>
+		<!-- The type annotations compiler - uncomment if desired -->
+		<!-- <dependency> <groupId>org.checkerframework</groupId> <artifactId>compiler</artifactId> 
+			<version>2.1.8</version> </dependency> -->
+		<!-- The annotated JDK to use (change to jdk7 if using Java 7) -->
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>jdk8</artifactId>
+			<version>2.1.8</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<finalName>${project.artifactId}-${project.version}.${build.number}</finalName>
 		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<!-- Change source and target to 1.7 if using Java 7 -->
+					<source>1.8</source>
+					<target>1.8</target>
+					<fork>true</fork>
+					<annotationProcessors>
+						<!-- Add all the checkers you want to enable here -->
+						<annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+					</annotationProcessors>
+					<compilerArgs>
+						<!-- location of the annotated JDK, which comes from a Maven dependency -->
+						<arg>-Xbootclasspath/p:${annotatedJdk}</arg>
+						<!-- Uncomment the following line to use the type annotations compiler. -->
+						<!-- <arg>-J-Xbootclasspath/p:${typeAnnotationsJavac}</arg> -->
+					</compilerArgs>
+				</configuration>
+			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
@@ -88,6 +129,11 @@
 	</build>
 
 	<properties>
+		<!-- These properties will be set by the Maven Dependency plugin -->
+		<!-- Change to jdk7 if using Java 7 -->
+		<annotatedJdk>${org.checkerframework:jdk8:jar}</annotatedJdk>
+		<!-- Uncomment to use the type annotations compiler. -->
+		<!-- <typeAnnotationsJavac>${org.checkerframework:compiler:jar}</typeAnnotationsJavac> -->
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<build.number>SNAPSHOT</build.number>
