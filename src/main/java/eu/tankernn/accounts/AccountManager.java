@@ -34,8 +34,7 @@ public class AccountManager {
 	 * Initializes the account list using the last file opened, if available.
 	 * Otherwise creates an empty list.
 	 * 
-	 * @param refresh
-	 *            A runnable that gets called when the account list changes.
+	 * @param refresh A runnable that gets called when the account list changes.
 	 */
 	public static void init(Runnable refresh, boolean openLast) {
 		AccountManager.refresh = refresh;
@@ -53,9 +52,8 @@ public class AccountManager {
 		lastPassword = null;
 		while (true)
 			try {
-				jsonString = FileManager.openFile(lastPassword);
-				lastPassword = PasswordDialog
-						.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
+				jsonString = FileManager.openFile(CachedFileChooser.selectFile(false), lastPassword);
+				lastPassword = PasswordDialog.showPasswordDialog("The data is encrypted, please enter the password to decrypt it.");
 				break;
 			} catch (InvalidPasswordException e) {
 				continue;
@@ -77,7 +75,7 @@ public class AccountManager {
 		if (!closeFile())
 			return;
 
-		FileManager.writeLastFileToCache(null);
+		CachedFileChooser.clearCache();
 
 		lastPassword = null;
 		accounts.clear();
@@ -88,24 +86,22 @@ public class AccountManager {
 	/**
 	 * Saves the current list of accounts to a file.
 	 * 
-	 * @param saveAs
-	 *            Determines whether the user should be prompted to specify a
-	 *            new filename, or if the last filename should be used.
+	 * @param saveAs Determines whether the user should be prompted to specify a
+	 *        new filename, or if the last filename should be used.
 	 */
 	public static void saveFile(boolean saveAs) {
 		String data = exportJSON();
 		if (saveWithEncryption) {
 			while (lastPassword == null || lastPassword.length < 5) {
 				try {
-					lastPassword = PasswordDialog.showPasswordDialog(
-							"Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
+					lastPassword = PasswordDialog.showPasswordDialog("Select a password to encrypt the account file with. (At least 5 characters, preferrably longer)");
 				} catch (CancellationException ex) {
 					return;
 				}
 			}
-			FileManager.saveFile(data, saveAs, lastPassword);
+			FileManager.saveFile(CachedFileChooser.selectFile(saveAs), data, lastPassword);
 		} else {
-			FileManager.saveFile(data, saveAs);
+			FileManager.saveFile(CachedFileChooser.selectFile(saveAs), data);
 		}
 		lastJSONString = data;
 	}
@@ -118,17 +114,16 @@ public class AccountManager {
 	 */
 	public static boolean closeFile() {
 		if (AccountManager.hasUnsavedChanges()) {
-			int option = JOptionPane.showOptionDialog(null, "Would you like to save changes before exit?",
-					"Save changes", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, 0);
+			int option = JOptionPane.showOptionDialog(null, "Would you like to save changes before exit?", "Save changes", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, 0);
 
 			switch (option) {
-			case JOptionPane.YES_OPTION:
-				saveFile(false);
-				break;
-			case JOptionPane.NO_OPTION:
-				break;
-			default:
-				return false;
+				case JOptionPane.YES_OPTION:
+					saveFile(false);
+					break;
+				case JOptionPane.NO_OPTION:
+					break;
+				default:
+					return false;
 			}
 		}
 		accounts.clear();
@@ -158,8 +153,7 @@ public class AccountManager {
 	/**
 	 * Adds the specified account to the list and refreshes the window instance.
 	 * 
-	 * @param account
-	 *            The <code>Account</code> to be added to the list
+	 * @param account The <code>Account</code> to be added to the list
 	 */
 	public static void addAccount(Account account) {
 		accounts.add(account);
@@ -170,13 +164,11 @@ public class AccountManager {
 	 * Searches the list of accounts for ones matching the search string by name
 	 * or account number.
 	 * 
-	 * @param s
-	 *            The search string
+	 * @param s The search string
 	 * @return The list of matching accounts
 	 */
 	public static List<Account> search(String s) {
-		return accounts.stream().filter(a -> a.accountNumber.toLowerCase().contains(s.toLowerCase())
-				|| a.toString().toLowerCase().contains(s.toLowerCase())).collect(Collectors.toList());
+		return accounts.stream().filter(a -> a.accountNumber.toLowerCase().contains(s.toLowerCase()) || a.toString().toLowerCase().contains(s.toLowerCase())).collect(Collectors.toList());
 
 	}
 
