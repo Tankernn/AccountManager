@@ -36,7 +36,7 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 	private JList<Account> accounts;
 	private JScrollPane accountScrollPane;
 
-	private AccountPanel accountPanel;
+	public final AccountPanel accountPanel = new AccountPanel();;
 
 	/**
 	 * Launch the application.
@@ -86,8 +86,7 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		accountScrollPane.setPreferredSize(new Dimension(100, 100));
 		listPanel.add(accountScrollPane, BorderLayout.CENTER);
 		frame.add(listPanel, BorderLayout.WEST);
-
-		accountPanel = new AccountPanel();
+		
 		frame.add(accountPanel, BorderLayout.EAST);
 
 		frame.setTitle("Account Management System");
