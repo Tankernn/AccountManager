@@ -28,6 +28,32 @@ public class Account {
 		this.accountNumber = accountNumber;
 		this.history = history;
 	}
+	
+	public boolean transfer(double amount, Account receiver) {
+		if (amount <= 0 || amount > this.calculateBalance())
+			return false;
+		
+		this.history.add(new AccountEvent(-amount, "Transferred %.2f to " + receiver + "."));
+		receiver.history.add(new AccountEvent(amount, "Received %.2f from " + this + "."));
+		
+		return true;
+	}
+	
+	public boolean deposit(double amount) {
+		if (amount <= 0)
+			return false;
+		
+		history.add(new AccountEvent(amount, "User deposited %.2f."));
+		return true;
+	}
+	
+	public boolean withdraw(double amount) {
+		if (amount <= 0 || amount > this.calculateBalance())
+			return false;
+		
+		history.add(new AccountEvent(-amount, "User withdrew %.2f."));
+		return true;
+	}
 
 	@Override
 	public boolean equals(Object obj) {

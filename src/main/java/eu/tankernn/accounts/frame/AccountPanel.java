@@ -119,45 +119,29 @@ public class AccountPanel extends JPanel implements ActionListener {
 		if (src.equals(transferFrom)) {
 			double amount = showAmountDialog("transfer");
 
-			if (amount <= 0) {
-				return;
-			} else if (amount > currentAccount.calculateBalance()) {
-				JOptionPane.showMessageDialog(null, "Invalid amount.");
-				return;
-			}
-
 			int result = JOptionPane.showConfirmDialog(null,
 					new JComponent[] { new JLabel("Please select receiver account."), otherAccounts },
 					"Select account.", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-			
+
 			if (result != JOptionPane.OK_OPTION)
 				return;
-			
+
 			Account sender = currentAccount, receiver = (Account) otherAccounts.getSelectedItem();
 
-			sender.history.add(new AccountEvent(-amount, "Transferred %.2f to " + receiver + "."));
-			receiver.history.add(new AccountEvent(amount, "Received %.2f from " + sender + "."));
+			if (!sender.transfer(amount, receiver)) {
+				JOptionPane.showMessageDialog(null, "Invalid amount. (Negative on not enough funds)");
+			}
 		} else if (src.equals(deposit)) {
 			double amount = showAmountDialog("deposit");
 
-			if (amount < 0) {
+			if (!currentAccount.deposit(amount))
 				JOptionPane.showMessageDialog(this, "Please enter a positive value.");
-				return;
-			}
 
-			currentAccount.history.add(new AccountEvent(amount, "User deposited %.2f."));
 		} else if (src.equals(withdraw)) {
 			double amount = showAmountDialog("withdraw");
 
-			if (amount < 0) {
-				JOptionPane.showMessageDialog(this, "Please enter a positive value.");
-				return;
-			} else if (amount > currentAccount.calculateBalance()) {
-				JOptionPane.showMessageDialog(this, "You do not have enough balance to withdraw that amount.");
-				return;
-			}
-
-			currentAccount.history.add(new AccountEvent(-amount, "User withdrew %.2f."));
+			if (!currentAccount.withdraw(amount))
+				JOptionPane.showMessageDialog(null, "Invalid amount. (Negative on not enough funds)");
 		}
 
 		this.updatePanel(currentAccount);
