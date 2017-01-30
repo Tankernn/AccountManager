@@ -3,6 +3,7 @@ package eu.tankernn.accounts.test;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -10,8 +11,8 @@ import eu.tankernn.accounts.FileManager;
 import eu.tankernn.accounts.util.encryption.InvalidPasswordException;
 
 public class FileManagerTest {
-	String testData = "[VeryNice2123..----__...'+<<><";
-	File testFile = new File("test.txt");
+	static String testData = "[VeryNice2123..----__...'+<<><";
+	static File testFile = new File("test.txt");
 	
 	@Test
 	public void testPlainReadWrite() {
@@ -36,5 +37,10 @@ public class FileManagerTest {
 			e.printStackTrace();
 			Assert.fail(e.getMessage());
 		}
+	}
+	
+	@AfterClass
+	public static void tearDownClass() {
+		testFile.delete();
 	}
 }

@@ -1,8 +1,5 @@
 package eu.tankernn.accounts.test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,11 +20,9 @@ public class AccountManagerTest {
 
 	@Test
 	public void testSearch() {
-		List<Account> aList = new ArrayList<>();
-		aList.add(a);
-		Assert.assertEquals(aList, AccountManager.search(a.accountNumber));
-		Assert.assertEquals(aList, AccountManager.search(a.firstName));
-		Assert.assertEquals(aList, AccountManager.search(a.lastName));
-		Assert.assertEquals(a, AccountManager.getAccountByNumber(a.accountNumber));
+		Assert.assertTrue(AccountManager.search(a.accountNumber).contains(a));
+		Assert.assertTrue(AccountManager.search(a.firstName).contains(a));
+		Assert.assertTrue(AccountManager.search(a.lastName).contains(a));
+		Assert.assertEquals(a, AccountManager.getAccountByNumber(a.accountNumber).get());
 	}
 }

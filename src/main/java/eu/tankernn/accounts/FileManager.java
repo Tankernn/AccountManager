@@ -20,12 +20,14 @@ public class FileManager {
 	
 
 	/**
-	 * Loads the accounts in the file specified.
+	 * Reads and decrypts the JSON-string in the file specified.
 	 * 
 	 * @return A JSON-string containing the account information.
 	 * @throws InvalidPasswordException 
 	 */
 	public static String openFile(File file, char[] password) throws IOException, InvalidPasswordException {
+		if (file == null)
+			throw new FileNotFoundException();
 		Object data = null;
 		try {
 			// Try to read the file as a byte[][]

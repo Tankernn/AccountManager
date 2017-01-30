@@ -14,8 +14,10 @@ public class CachedFileChooser {
 		if (getLastFileFromCache() == null)
 			saveAs = true;
 		if (saveAs)
-			FILE_CHOOSER.showSaveDialog(null);
-		return saveAs ? FILE_CHOOSER.getSelectedFile() : getLastFileFromCache();
+			FILE_CHOOSER.showDialog(null, "Open/Save");
+		File f = saveAs ? FILE_CHOOSER.getSelectedFile() : getLastFileFromCache();
+		writeLastFileToCache(f);
+		return f;
 	}
 
 	private static File getLastFileFromCache() {
@@ -23,8 +25,6 @@ public class CachedFileChooser {
 		try {
 			// Create file to cache last filename
 			if (!lastFilenameCache.exists()) {
-				lastFilenameCache.getParentFile().mkdirs();
-				lastFilenameCache.createNewFile();
 				return null;
 			}
 			String lastFilePath = FileManager.readFileAsString(lastFilenameCache);
@@ -38,10 +38,13 @@ public class CachedFileChooser {
 	}
 
 	static void writeLastFileToCache(File file) {
-		if (file == null)
+		if (file == null) {
 			lastFilenameCache.delete();
+			return;
+		}
 		// Remember this filename
-		if (!file.equals(lastFilenameCache)) { // Don't remember the cache file
+		if (!lastFilenameCache.equals(file)) { // Don't remember the cache file
+			lastFilenameCache.getParentFile().mkdirs();
 			FileManager.saveFile(lastFilenameCache, file.getAbsolutePath());
 			FILE_CHOOSER.setSelectedFile(file);
 		}

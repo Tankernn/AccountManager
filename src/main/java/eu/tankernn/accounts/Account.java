@@ -13,7 +13,10 @@ public class Account {
 
 	public Account(String firstName, String lastName) {
 		// Generate a random, unique account id
-		accountNumber = Stream.generate(() -> new BigInteger(20, new SecureRandom()).toString()).limit(AccountManager.getAccounts().size() + 1).filter(num -> AccountManager.getAccountByNumber(num).isPresent()).findFirst().orElseThrow(() -> new ArrayIndexOutOfBoundsException());
+		accountNumber = Stream.generate(() -> new BigInteger(20, new SecureRandom()).toString())
+				.limit(AccountManager.getAccounts().size() + 1)
+				.filter(num -> !AccountManager.getAccountByNumber(num).isPresent()).findFirst()
+				.orElseThrow(() -> new ArrayIndexOutOfBoundsException());
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.history = new ArrayList<AccountEvent>();
