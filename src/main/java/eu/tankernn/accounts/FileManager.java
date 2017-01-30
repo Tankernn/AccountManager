@@ -12,8 +12,6 @@ import java.io.ObjectStreamException;
 
 import javax.swing.JOptionPane;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-
 import eu.tankernn.accounts.util.encryption.EncryptedComplex;
 import eu.tankernn.accounts.util.encryption.Encryption;
 import eu.tankernn.accounts.util.encryption.InvalidPasswordException;
@@ -74,7 +72,7 @@ public class FileManager {
 		writeBytesToFile(file, contents.getBytes());
 	}
 
-	private static void writeBytesToFile(@NonNull File file, byte[] data) {
+	private static void writeBytesToFile(File file, byte[] data) {
 		try {
 			FileOutputStream writer = new FileOutputStream(file);
 			writer.write(data, 0, data.length);
@@ -88,7 +86,7 @@ public class FileManager {
 
 	}
 
-	public static <T> T readObjectFromFile(@NonNull File file, Class<T> class1)
+	public static <T> T readObjectFromFile(File file, Class<T> class1)
 			throws ClassNotFoundException, FileNotFoundException, IOException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
 		T obj = class1.cast(in.readObject());
