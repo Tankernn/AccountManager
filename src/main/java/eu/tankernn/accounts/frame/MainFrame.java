@@ -6,6 +6,7 @@ import java.awt.EventQueue;
 import java.awt.LayoutManager;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -19,6 +20,7 @@ import javax.swing.event.ListSelectionListener;
 
 import eu.tankernn.accounts.Account;
 import eu.tankernn.accounts.AccountManager;
+import eu.tankernn.accounts.CachedFileChooser;
 import eu.tankernn.accounts.frame.menu.MainMenuBar;
 import eu.tankernn.accounts.util.GUIUtils;
 
@@ -95,9 +97,7 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		// Ask the user to save changes before quitting
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent ev) {
-				if (AccountManager.closeFile()) {
-					frame.dispose();
-				}
+				exit();
 			}
 		});
 	}
@@ -107,15 +107,27 @@ public class MainFrame implements ListSelectionListener, DocumentListener {
 		if (accounts.getSelectedValue() != null)
 			accountPanel.updatePanel(accounts.getSelectedValue());
 	}
+	
+	public void exit() {
+		if (AccountManager.closeFile()) {
+			frame.dispose();
+		}
+	}
 
 	public void refresh() {
 		accounts.setModel(GUIUtils.listModelFromList(AccountManager.getAccounts()));
 		accountPanel.updatePanel(null);
+		File f = CachedFileChooser.getLastFileFromCache();
+		this.setTitleFilename(f == null ? "New file" : f.getName());
 	}
 
 	private void search() {
 		String s = search.getText().trim();
 		accounts.setModel(GUIUtils.listModelFromList(AccountManager.search(s)));
+	}
+	
+	private void setTitleFilename(String name) {
+		frame.setTitle("Account Management System - " + name);
 	}
 
 	// Update list on search field change

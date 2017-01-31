@@ -20,7 +20,7 @@ public class NewAccountDialog {
 	 * Create the dialog.
 	 */
 	public NewAccountDialog() {
-		result = JOptionPane.showConfirmDialog(null, components, "New Account", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+		result = JOptionPane.showConfirmDialog(null, components, "New Account", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 	}
 
 	public String getFirstName() {

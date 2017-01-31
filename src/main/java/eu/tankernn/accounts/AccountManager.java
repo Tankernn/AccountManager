@@ -111,6 +111,7 @@ public class AccountManager {
 			FileManager.saveFile(CachedFileChooser.selectFile(saveAs), data);
 		}
 		lastJSONString = data;
+		refresh.run();
 	}
 
 	/**

@@ -48,16 +48,18 @@ public class MainMenuBar extends JMenuBar implements ActionListener {
 		// File menu
 		addMenuWithItems(fileMenu, newFile, openFile, saveFile, saveFileAs);
 
-		newFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Event.CTRL_MASK));
-		openFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Event.CTRL_MASK));
-		saveFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Event.CTRL_MASK));
-		saveFileAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Event.CTRL_MASK | Event.SHIFT_MASK));
+		newFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Event.META_MASK));
+		openFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Event.META_MASK));
+		saveFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Event.META_MASK));
+		saveFileAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Event.META_MASK | Event.SHIFT_MASK));
 
 		// Database menu
 		addMenuWithItems(database, importDatabase, exportDatabase);
 
 		// Accounts menu
 		addMenuWithItems(accountMenu, newAccount, refresh);
+		newAccount.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, Event.META_MASK | Event.SHIFT_MASK));
+		refresh.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
 
 		// Options menu
 		addMenuWithItems(optionsMenu, useEncryption);

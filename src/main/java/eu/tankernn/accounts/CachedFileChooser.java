@@ -20,7 +20,7 @@ public class CachedFileChooser {
 		return f;
 	}
 
-	private static File getLastFileFromCache() {
+	public static File getLastFileFromCache() {
 		// Open last file
 		try {
 			// Create file to cache last filename
